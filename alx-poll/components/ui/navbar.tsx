@@ -2,10 +2,17 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { useAuth } from "@/context/AuthContext"
+import { useRouter } from "next/navigation"
 
 export function Navbar() {
-  // Mock authentication state - will be replaced with actual auth
-  const isLoggedIn = false
+  const { user, signOut } = useAuth()
+  const router = useRouter()
+  
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/')
+  }
 
   return (
     <header className="border-b">
@@ -18,19 +25,15 @@ export function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          {isLoggedIn ? (
+          {user ? (
             <>
               <Link href="/polls/create">
                 <Button variant="outline">Create Poll</Button>
               </Link>
-              <Link href="/profile">
-                <Button variant="ghost" size="icon">
-                  <span className="sr-only">Profile</span>
-                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                    <span className="text-xs font-medium">U</span>
-                  </div>
-                </Button>
+              <Link href="/polls/my">
+                <Button variant="ghost">My Polls</Button>
               </Link>
+              <Button variant="ghost" onClick={handleSignOut}>Log Out</Button>
             </>
           ) : (
             <>

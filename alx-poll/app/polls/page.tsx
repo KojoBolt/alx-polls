@@ -3,32 +3,33 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react"
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/context/AuthContext'
 
 export default function PollsPage() {
-  // Mock data - will be replaced with actual data fetching
-  const polls = [
-    {
-      id: "1",
-      title: "Favorite Programming Language",
-      description: "What programming language do you prefer to use?",
-      votes: 42,
-      created: "2023-05-15",
-    },
-    {
-      id: "2",
-      title: "Best Frontend Framework",
-      description: "Which frontend framework do you think is the best?",
-      votes: 36,
-      created: "2023-05-10",
-    },
-    {
-      id: "3",
-      title: "Remote Work Preference",
-      description: "Do you prefer working remotely or in an office?",
-      votes: 28,
-      created: "2023-05-05",
-    },
-  ]
+  const { user } = useAuth();
+  const [polls, setPolls] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPolls = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('polls')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (!error && data) setPolls(data);
+      setLoading(false);
+    };
+    fetchPolls();
+  }, []);
+
+  const handleDelete = async (pollId: string) => {
+    if (!confirm('Are you sure you want to delete this poll?')) return;
+    await supabase.from('polls').delete().eq('id', pollId);
+    setPolls((prev) => prev.filter((p) => p.id !== pollId));
+  };
 
   return (
     <div className="container py-10">
@@ -38,27 +39,38 @@ export default function PollsPage() {
           <Button>Create New Poll</Button>
         </Link>
       </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {polls.map((poll) => (
-          <Card key={poll.id}>
-            <CardHeader>
-              <CardTitle>{poll.title}</CardTitle>
-              <CardDescription>{poll.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                {poll.votes} votes · Created on {poll.created}
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Link href={`/polls/${poll.id}`} className="w-full">
-                <Button variant="outline" className="w-full">View Poll</Button>
-              </Link>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+      {loading ? (
+        <p>Loading polls...</p>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {polls.map((poll) => (
+            <Card key={poll.id}>
+              <CardHeader>
+                <CardTitle>{poll.title}</CardTitle>
+                <CardDescription>{poll.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Created on {new Date(poll.created_at).toLocaleDateString()}
+                </p>
+              </CardContent>
+              <CardFooter className="flex gap-2">
+                <Link href={`/polls/${poll.id}`} className="w-full">
+                  <Button variant="outline" className="w-full">View Poll</Button>
+                </Link>
+                {user && poll.creator_id === user.id && (
+                  <>
+                    <Link href={`/polls/${poll.id}/edit`}>
+                      <Button variant="secondary">Edit</Button>
+                    </Link>
+                    <Button variant="destructive" onClick={() => handleDelete(poll.id)}>Delete</Button>
+                  </>
+                )}
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
