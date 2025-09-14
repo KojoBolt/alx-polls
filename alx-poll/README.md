@@ -19,5 +19,5 @@ ALX Polly allows users to:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/alx-polly.git
+   git clone https://github.com/kojobolt/alx-poll.git
    cd alx-polly
