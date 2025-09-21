@@ -1,0 +1,7 @@
+const { data, error } = await supabase
+  .from('table_name')
+  .upsert(
+    { id: 1, name: 'Updated Name' }, // Data to upsert
+    { onConflict: ['id'] }          // Conflict column(s)
+  )
+  .select();                         // Return the modified rows
